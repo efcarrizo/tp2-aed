@@ -29,7 +29,7 @@ def principal():
     cant_primer_cp = 0
     
     #Paso 1 abrir el archivo
-    archivo = open("envios100SC.txt", "rt", encoding="utf-8")
+    archivo = open("envios25.txt", "rt", encoding="utf-8")
     #Paso 2 leer
     linea = archivo.readline()
     linea = linea_sin_salto(linea)
@@ -333,14 +333,14 @@ def extraer_datos(linea):
 
 # Contador de envios internacionales
 def contar_envios_internacionales(destino):
-    #Bandera
-    envios_internacionales = False
+    global e_internacionales
+    global envios_nacionales
 
-    if destino == 'Argentina':
-        envios_internacionales = True
+    if destino != 'Argentina':
+        e_internacionales += 1
     else:
-        envios_internacionales = False
-    return envios_internacionales
+        envios_nacionales += 1
+    return e_internacionales, envios_nacionales
 
 # Porcentaje de envios internacionales sobre el total
 def porcentaje_envios(envios_internacionales, total_envios):
