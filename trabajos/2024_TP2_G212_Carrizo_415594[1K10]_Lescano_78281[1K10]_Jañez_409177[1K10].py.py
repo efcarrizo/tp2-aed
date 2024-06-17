@@ -1,131 +1,7 @@
 import math
+ARCHIVO = "envios.txt"
 
-def principal():
-
-    #Banceras:
-    pcpb = False
-
-    #Contadores:
-    #Total envios
-    total_envios =+ 1
-    #Envios internacionales
-    e_internacionales = 0
-    #Envios validos e invalidos
-    cedvalid = 0
-    cedinvalid = 0
-    #Tipo de carta enviada
-    ccs = 0
-    ccc = 0
-    cce = 0
-    #Importe de envios totales
-    imp_acu_total = 0
-    
-    #Mayor cantidad de cartas
-    tipo_mayor = None
-
-    #Primer codigo postal
-    primer_cp = ""
-    #Repeticion
-    cant_primer_cp = 0
-    
-    #Paso 1 abrir el archivo
-    archivo = open("envios25.txt", "rt", encoding="utf-8")
-    #Paso 2 leer
-    linea = archivo.readline()
-    linea = linea_sin_salto(linea)
-    control = obtener_tipo_control(linea)
-    print(f"Tipo de control {control}")
-    #Paso 3 leer contenido de archivo
-    linea = archivo.readline()
-    while linea != "":
-        linea = linea_sin_salto(linea)
-        #Paso 4 procesar informacion de la linea
-        #Se le aplica laz funcion extraer datos para sacar 4 variables
-        cod_pos, dir, tipo, forma = extraer_datos(linea)
-
-        #Destino del envio, monto extra internacional
-        destino, pais_destino_monto = pais_destino(cod_pos, tipo, forma)
-
-        print(f"CP: {cod_pos} Direccion: {dir} Tipo: {tipo} Forma: {forma}, destino: {destino}, monto:{pais_destino_monto}")
-
-        #Contro HC O SC
-        if control == "Hard Control":
-            #Validar direccion
-            val_dir = validar_direccion(dir)
-            #Si la direccion es valida
-            if val_dir:
-                #Si es valida 
-                imp_acu_total += pais_destino_monto
-                envios_internacionales = contar_envios_internacionales(destino)
-                if envios_internacionales:
-                    e_internacionales += 1
-                total_envios =+ 1
-                
-                cedvalid += 1
-                if 0<= tipo <=2:
-                    ccs += 1
-                elif 3 <= tipo <= 4:
-                    ccc += 1
-                else: 
-                    cce += 1
-            else: 
-                cedinvalid += 1
-
-        else:
-            total_envios += 1
-            envios_internacionales = contar_envios_internacionales(destino)
-            if envios_internacionales:
-                e_internacionales += 1
-            imp_acu_total += pais_destino_monto
-            cedvalid += 1
-            if 0<= tipo <=2:
-                ccs += 1
-            elif 3 <= tipo <= 4:
-                ccc += 1
-            else: 
-                cce += 1
-            
-        #Importes finales
-        tipo_mayor = mayor_cartas(ccs, ccc, cce)
-        
-        #Cantidad de envios internacionales 
-        envios_internacionales = contar_envios_internacionales(destino)
-        if envios_internacionales:
-            print(envios_internacionales)
-            e_internacionales += 1
-        #Primer codigo postal y si se repite
-        if pcpb == False:
-            primer_cp = cod_pos
-            pcpb = True
-        
-        if cod_pos == primer_cp:
-            cant_primer_cp += 1
-
-        porc = porcentaje_envios(e_internacionales, total_envios)
-
-
-        linea = archivo.readline()
-        
-
-    archivo.close()
-
-    print(' (r1) - Tipo de control de direcciones:', control)#CHECK
-    print(' (r2) - Cantidad de envios con direccion valida:', cedvalid)#CHECK
-    print(' (r3) - Cantidad de envios con direccion no valida:', cedinvalid)#CHECK
-    print(' (r4) - Total acumulado de importes finales:', imp_acu_total) #CHECK
-    print(' (r5) - Cantidad de cartas simples:', ccs) #CHECK
-    print(' (r6) - Cantidad de cartas certificadas:', ccc) #CHECK
-    print(' (r7) - Cantidad de cartas expresas:', cce) #CHECK
-    print(' (r8) - Tipo de carta con mayor cantidad de envios:', tipo_mayor) #CHECK
-    print(' (r9) - Codigo postal del primer envio del archivo:', primer_cp) #CHECK
-    print('(r10) - Cantidad de veces que entro ese primero:', cant_primer_cp) #CHECK
-    print(f'Envios internacionales: {envios_internacionales}')#REVISAR
-    # print('(r11) - Importe menor pagado por envios a Brasil:', menimp)
-    # print('(r12) - Codigo postal del envio a Brasil con importe menor:', mencp)
-    print('(r13) - Porcentaje de envios al exterior sobre el total:', porc) #REVISAR
-    # print('(r14) - Importe final promedio de los envios Buenos Aires:', prom)
-
-#Funcion creada para recibir el cp y devolver el monto total por pais y su destino
+# Funcion creada para recibir el cp y devolver el monto total por pais y su destino
 def pais_destino(cp, tipo, forma):
     n = len(cp)
     if n < 4 or n > 9:
@@ -288,7 +164,7 @@ def pais_destino(cp, tipo, forma):
     if forma == 1:
         importe_final = int(0.9 * inicial)
 
-    return destino, importe_final
+    return destino, importe_final, provincia
 
 #Funcion para sacar el salto de linea del final
 def linea_sin_salto(linea):
@@ -319,7 +195,6 @@ def obtener_tipo_control(linea):
         else:
             tipo_control = "Soft Control"
 
-
     return tipo_control
 
 #Funcion que extrae los datos de las lineas
@@ -340,21 +215,34 @@ def contar_envios_internacionales(destino):
         e_internacionales += 1
     else:
         envios_nacionales += 1
+
     return e_internacionales, envios_nacionales
 
 # Porcentaje de envios internacionales sobre el total
-def porcentaje_envios(envios_internacionales, total_envios):
-    promedio = (envios_internacionales * 100) / total_envios
-    return promedio
+def porcentaje_envios(e_internacionales, total_envios):
 
-#define si la direccion es valida o no
+    promedio = (e_internacionales * 100) / total_envios
+
+    return int(promedio)
+
+# Funcion para calcular el promedio de los envios a bs as
+def promedio_bsas(monto_total_bsas, cant_bsas):
+    if cant_bsas != 0:
+        promedio = monto_total_bsas/cant_bsas
+
+    else:
+        promedio = 0
+    
+    return int(promedio)
+    
+# Funcion para sacar el punto final de las direcciones
 def recorta_direccion(direccion):
     if direccion[-1] == ".":
         direccion = direccion[:-1]
         
     return direccion
 
-#Funcion para definir si la direccion es valida
+# Funcion para definir si la direccion es valida
 def validar_direccion(dir):
     caracteres = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZabcdefghijklmnñopqrstuvwxyz0123456789"
     #Banderas
@@ -382,7 +270,7 @@ def validar_direccion(dir):
             
     return ver
 
-#Funcion que recibe el tipo de envio, el monto extra por ser internacional y la forma
+# Funcion que recibe el tipo de envio, el monto extra por ser internacional y la forma
 def importes_finales(tipoenvio, envios_internacionales, forma):
     precio = 0
     if tipoenvio == 0:
@@ -417,11 +305,9 @@ def importes_finales(tipoenvio, envios_internacionales, forma):
     else:
         total = math.trunc(total)
 
-
-
     return total
 
-#Calcular la mayor cantidad de cartas
+# Calcular la mayor cantidad de cartas
 def mayor_cartas(ccs, ccc, cce):
     mayor = None
     if ccs > ccc and ccs > cce:
@@ -433,4 +319,175 @@ def mayor_cartas(ccs, ccc, cce):
 
     return mayor
 
-principal()
+# Funcion para calcular el menor precio pagado en Brasil
+def min_brasil_cp(destino,importe_final,CP):
+    global min
+    global acum_cp
+    global acum_cp_rep
+    global cont_min
+    if destino == "Brasil":
+        if min == None or min > importe_final:
+            min = importe_final
+            acum_cp = CP
+            cont_min = 0
+
+        elif min == importe_final:
+            if cont_min == 0:
+                cont_min += 1
+                acum_cp_rep = acum_cp
+
+            elif cont_min >= 1:
+                acum_cp = acum_cp_rep
+
+    return min, acum_cp
+
+# Programa principal
+def main():
+
+    #Banceras:
+    pcpb = False
+
+    #Contadores:
+    #Total envios
+    total_envios = 0
+    #Envios internacionales
+    global e_internacionales
+    global envios_nacionales
+    e_internacionales = 0
+    envios_nacionales = 0
+    #Monto de envios a Buenos Aires
+    monto_total_bsas = 0
+    cant_bsas = 0
+    #Menor monto Brasil
+    global min, acum_cp, acum_cp_rep, cont_min
+    min, acum_cp, acum_cp_rep, cont_min = None, 0, 0, 0
+
+    #Envios validos e invalidos
+    cedvalid, cedinvalid = 0,0
+
+    #Tipo de carta enviada
+    ccs, ccc, cce = 0,0,0
+
+    #Importe de envios totales
+    imp_acu_total = 0
+    
+    #Mayor cantidad de cartas
+    tipo_mayor = None
+
+    #Primer codigo postal
+    primer_cp = ""
+
+    #Repeticion
+    cant_primer_cp = 0
+    
+    #Paso 1 abrir el archivo
+    archivo = open(ARCHIVO, "rt", encoding="utf-8")
+    #Paso 2 leer
+    linea = archivo.readline()
+    linea = linea_sin_salto(linea)
+    control = obtener_tipo_control(linea)
+    # print(f"Tipo de control {control}")
+    #Paso 3 leer contenido de archivo
+    linea = archivo.readline()
+    while linea != "":
+        linea = linea_sin_salto(linea)
+        #Paso 4 procesar informacion de la linea
+        #Se le aplica laz funcion extraer datos para sacar 4 variables
+        cod_pos, dir, tipo, forma = extraer_datos(linea)
+
+        #Destino del envio, monto extra internacional
+        destino, pais_destino_monto, provincia = pais_destino(cod_pos, tipo, forma)
+
+        #Contro HC O SC
+        if control == "Hard Control":
+            #Contar el total de envios
+            total_envios += 1
+            #Validar direccion
+            val_dir = validar_direccion(dir)
+            #Si la direccion es valida
+            if val_dir:
+                # Sumamos los importes para tener el total
+                imp_acu_total += pais_destino_monto
+                e_internacionales, envios_nacionales = contar_envios_internacionales(destino)
+                cedvalid += 1
+
+                # Si es Bs As y tiene direccion valida se suman los montos y cuantas veces hubo Bs As
+                if provincia == 'Buenos Aires':
+                    monto_total_bsas += pais_destino_monto
+                    cant_bsas += 1
+                
+                # Tipos de cartas enviadas segun el tipo ingresado
+                if 0<= tipo <=2:
+                    ccs += 1
+                elif 3 <= tipo <= 4:
+                    ccc += 1
+                else: 
+                    cce += 1
+
+            else: 
+                cedinvalid += 1
+
+
+        #Si el tipo de control es Soft Control
+        else:
+            # Suma todos los envios a la variable total_envios
+            total_envios += 1
+            # Divide los envios en internacionales y nacionales
+            e_internacionales, envios_nacionales = contar_envios_internacionales(destino)
+            imp_acu_total += pais_destino_monto
+            cedvalid += 1
+
+            if provincia == 'Buenos Aires':
+                monto_total_bsas += pais_destino_monto
+                cant_bsas += 1
+
+            if 0<= tipo <=2:
+                ccs += 1
+            elif 3 <= tipo <= 4:
+                ccc += 1
+            else: 
+                cce += 1
+        
+        # Menor importe de Brasil, y su CP
+        menimp, mencp = min_brasil_cp(destino,pais_destino_monto,cod_pos)
+
+        #Importes finales
+        tipo_mayor = mayor_cartas(ccs, ccc, cce)
+        
+        #Primer codigo postal y si se repite
+        if pcpb == False:
+            primer_cp = cod_pos
+            pcpb = True
+        
+        if cod_pos == primer_cp:
+            cant_primer_cp += 1
+
+        porc = porcentaje_envios(e_internacionales, total_envios)
+        prom = promedio_bsas(monto_total_bsas, cant_bsas)
+
+
+        linea = archivo.readline()
+        
+
+    archivo.close()
+
+    return control, cedvalid, cedinvalid, imp_acu_total, ccs, ccc, cce, tipo_mayor, primer_cp, cant_primer_cp, menimp, mencp, porc, prom
+
+
+control, cedvalid, cedinvalid, imp_acu_total, ccs, ccc, cce, tipo_mayor, primer_cp, cant_primer_cp, menimp, mencp, porc, prom = main()
+
+
+print(' (r1) - Tipo de control de direcciones:', control)
+print(' (r2) - Cantidad de envios con direccion valida:', cedvalid)
+print(' (r3) - Cantidad de envios con direccion no valida:', cedinvalid)
+print(' (r4) - Total acumulado de importes finales:', imp_acu_total) 
+print(' (r5) - Cantidad de cartas simples:', ccs) 
+print(' (r6) - Cantidad de cartas certificadas:', ccc) 
+print(' (r7) - Cantidad de cartas expresas:', cce) 
+print(' (r8) - Tipo de carta con mayor cantidad de envios:', tipo_mayor) 
+print(' (r9) - Codigo postal del primer envio del archivo:', primer_cp) 
+print('(r10) - Cantidad de veces que entro ese primero:', cant_primer_cp) 
+print('(r11) - Importe menor pagado por envios a Brasil:', menimp)
+print('(r12) - Codigo postal del envio a Brasil con importe menor:', mencp)
+print('(r13) - Porcentaje de envios al exterior sobre el total:', porc) 
+print('(r14) - Importe final promedio de los envios Buenos Aires:', prom) 
